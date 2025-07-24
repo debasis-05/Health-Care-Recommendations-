@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hospital Readmission Predictor</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f0f4f8;
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+    }
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🏥 Predict Hospital Readmission Risk</h2>
+
+  <form id="predictionForm">
+    <div class="form-group">
+      <label>Age</label>
+      <input type="number" id="age" required>
+    </div>
+    <div class="form-group">
+      <label>Gender</label>
+      <select id="gender">
+        <option value="1">Male</option>
+        <option value="0">Female</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Diabetes</label>
+      <select id="diabetes">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Heart Disease</label>
+      <select id="heart_disease">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Hypertension</label>
+      <select id="hypertension">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Number of Visits (Last Year)</label>
+      <input type="number" id="num_visits" required>
+    </div>
+    <div class="form-group">
+      <label>Length of Stay (Days)</label>
+      <input type="number" id="length_of_stay" required>
+    </div>
+    <button type="submit">Predict</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    document.getElementById('predictionForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const data = {
+        age: parseInt(document.getElementById('age').value),
+        gender: parseInt(document.getElementById('gender').value),
+        diabetes: parseInt(document.getElementById('diabetes').value),
+        heart_disease: parseInt(document.getElementById('heart_disease').value),
+        hypertension: parseInt(document.getElementById('hypertension').value),
+        num_visits: parseInt(document.getElementById('num_visits').value),
+        length_of_stay: parseInt(document.getElementById('length_of_stay').value)
+      };
+
+      fetch('/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.readmitted === 1) {
+          document.getElementById('result').innerText = "⚠ High Risk of Readmission";
+        } else if (result.readmitted === 0) {
+          document.getElementById('result').innerText = "✅ Low Risk of Readmission";
+        } else {
+          document.getElementById('result').innerText = "❌ Error: " + result.error;
+        }
+      })
+      .catch(err => {
+        document.getElementById('result').innerText = "❌ Network Error: " + err.message;
+      });
+    });
+  </script>
+
+</body>
+</html>

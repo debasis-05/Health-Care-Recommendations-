@@ -1,15 +1,14 @@
-!pip install flask-ngrok scikit-learn pandas
-
-from flask import Flask, request, jsonify
-from flask_ngrok import run_with_ngrok
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 import numpy as np
-import joblib
-
-# Load or define your model here
 from sklearn.ensemble import RandomForestClassifier
-
-# For demo: Train simple model
 import pandas as pd
+
+# Setup Flask
+app = Flask(__name__, static_folder='.')
+CORS(app)  # Enable cross-origin access from HTML
+
+# Create simple dataset for demo model
 X = pd.DataFrame({
     "age": [60, 75, 50],
     "gender": [1, 0, 0],
@@ -20,27 +19,35 @@ X = pd.DataFrame({
     "length_of_stay": [3, 7, 2]
 })
 y = [1, 1, 0]
+
+# Train model
 model = RandomForestClassifier()
 model.fit(X, y)
 
-# Flask app
-app = Flask(__name__)
-run_with_ngrok(app)
+# Serve HTML
+@app.route("/")
+def serve_html():
+    return send_from_directory('.', 'New Text Document.html')
 
+# Prediction API
 @app.route("/predict", methods=["POST"])
 def predict():
-    data = request.get_json()
-    features = np.array([
-        data["age"],
-        data["gender"],
-        data["diabetes"],
-        data["heart_disease"],
-        data["hypertension"],
-        data["num_visits"],
-        data["length_of_stay"]
-    ]).reshape(1, -1)
-    
-    prediction = model.predict(features)[0]
-    return jsonify({"readmitted": int(prediction)})
+    try:
+        data = request.get_json()
+        features = np.array([
+            data["age"],
+            data["gender"],
+            data["diabetes"],
+            data["heart_disease"],
+            data["hypertension"],
+            data["num_visits"],
+            data["length_of_stay"]
+        ]).reshape(1, -1)
 
-app.run()
+        prediction = model.predict(features)[0]
+        return jsonify({"readmitted": int(prediction)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+if __name__ == "__main__":
+    app.run(debug=True)
